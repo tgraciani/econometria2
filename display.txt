@@ -1,0 +1,40 @@
+# INSTRUÇÕES: Copie e cole todo este texto em um arquivo chamado "display.R", depois use a função "source()" para chamá-lo.
+
+show_math <- function(..., css, use_viewer = !is.null(getOption('viewer'))) {
+  mj <- "<script>
+  (function () {
+    var script = document.createElement('script');
+    script.type = 'text/javascript';
+    script.src  = 'https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
+    document.getElementsByTagName('head')[0].appendChild(script);
+  })();
+</script>"
+
+  view_html <- function(..., viewer) {
+    x <- c(...)
+    if (is.null(x)) return(invisible())
+    htmlFile <- tempfile(fileext = '.html')
+    writeLines(x, con = htmlFile)
+    if (viewer)
+          tryCatch(rstudioapi::viewer(htmlFile),
+                   error = function(e) {
+                     message('Viewer not available - opening in browser.\n',
+                             'If using rstudioapi, try installing the \'rstudioapi\' package.',
+                             domain = NA)
+                     browseURL(htmlFile)
+                   })
+     else browseURL(htmlFile)
+     invisible(x)
+  }
+
+  check_expr <- function(x)
+    sprintf('\\[%s\\]', gsub('^\\$+|\\$+$', '', x))
+
+  x <- paste(sapply(c(...), check_expr), collapse = '<br />')
+  if (!nzchar(x)) return(invisible())
+  if (missing(css)) css <- ''
+
+  view_html(sprintf('<span class="math" style="font-size: 24px; %s;">\n', css),
+            x, '\n</span>\n', mj, viewer = use_viewer)
+}
+
